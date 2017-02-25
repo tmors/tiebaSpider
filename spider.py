@@ -4,8 +4,11 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 from xml.parsers import expat
 import re
+import codecs
 
 class user:
+    userId = 0
+    userName = ""
     userAge = 0
     postNumb = 0
     def __init__(self):
@@ -45,9 +48,12 @@ def sendRequest(connection,url,fields):
 
 def main():
     baseUrl = "http://tieba.baidu.com"
+
     httpPoll = buildConnection("tieba.baidu.com")
     fields={"kw":"花泽香菜"}
     page = sendRequest(httpPoll,baseUrl+"/f",fields=fields)
+    bodyPattern = re.compile(r"<body>.*</body>")
+    body = bodyPattern.findall(str(page.data))
     content = page.data.decode("utf-8")
 
 
@@ -57,7 +63,7 @@ def main():
     postList = []
     hrefPattern = re.compile(r"(?<=href=\").*?(?=\")")
     titlePattern = re.compile(r"(?<=title=\").*?(?=\")")
-
+    #user url http://tieba.baidu.com/home/get/panel?ie=utf-8&un=athmey
 
     for i in posts:
         href = hrefPattern.findall(i)
@@ -67,22 +73,46 @@ def main():
 
     contentPostedList = []
     contentPostedPattern = re.compile(r"(?<=class=\"d_post_content j_d_post_content \">).*?(?=</div>)")
-    authorPostedPattern = re.compile(r"(?<=class=\"d_name\" data-field='{&quot;user_id&quot;:)\d+?(?=\")")
+    # authorIdPostedPattern = re.compile(r"(?<=class=\"d_name\" data-field='{&quot;user_id&quot;:)\d+?(?=})")
+    # authorNamePostedPattern = re.compile(r"((?<=a data-field=\\'\{&quot;un&quot;:&quot;).*?(?=&quot))")
+    authorNamePostedPattern = re.compile(r"(?<=<a data-field='\{&quot;un&quot;:&quot;).*?(?=&)")
+    #inner content extract
+    innerContentPattern = re.compile(r"<?<=<ul class=\"j_lzl_m_w\" style=\"display:\">>.*<?=/ul>")
     for i in postList:
         pageInnerPost = sendRequest(httpPoll,baseUrl + i.href,fields={})
-        content = pageInnerPost.data.decode("utf-8")
+        # content = pageInnerPost.data.decode("utf-8")
+        # content = bytes.decode(pageInnerPost.data)
+        try:
+            content = pageInnerPost.data.decode("utf-8")
+        except:
+            print("droped url:",baseUrl+i.href)
+            continue
+
         #extract post content
         curPostsContentList = contentPostedPattern.findall(content)
-        curPostAuthorIdList = authorPostedPattern.findall(content)
+        # curPostAuthorIdList = authorIdPostedPattern.findall(content)
+        curPostAuthorNameList = authorNamePostedPattern.findall(content)
+        # if(curPostsContentList.__len__()!=curPostAuthorIdList.__len__()):
+        #     print("content list size unequals to author list size")
+        #     continue
         postContentList = []
-        for i,j in curPostsContentList,curPostAuthorIdList:
+        for curContent,curName in zip(curPostsContentList,curPostAuthorNameList):
             curPostContent = postContent()
-            curPostContent.content = i
-            curPostContent.author = j
+            # escapedContent = codecs.escape_decode(curContent)[0]
+            curPostContent.content = curContent
+            curUser = user()
+            # curUser.userId = curUserId
+            #remember the method of decode
+            curName = curName.encode("utf-8").decode("unicode_escape")
+            curUser.userName = curName
+            postContent.author = curUser
+            userUrl = "/home/get/panel"
+            dict = {"un":curName,"ie":"utf-8"}
+            userInfo = sendRequest(httpPoll,baseUrl + userUrl,fields=dict)
             postContentList.append(curPostContent)
 
         i.posContentList = postContentList
-        print()
+        print(baseUrl+i.href,"finished")
 
     print(page)
 
