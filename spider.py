@@ -1,16 +1,16 @@
 import urllib3
-from urllib3 import *
-import xml.etree.ElementTree as ET
-from lxml import etree
-from xml.parsers import expat
 import re
 import codecs
 
 class user:
     userId = 0
     userName = ""
+    #tieba age
     userAge = 0
+    #post number
     postNumb = 0
+    #sex
+    sex = ""
     def __init__(self):
         pass
 
@@ -46,6 +46,23 @@ def sendRequest(connection,url,fields):
     page = connection.request(method="GET",url=url,fields=fields)
     return page
 
+
+def getUserInfo(httpConnection,baseUrl,curName):
+    userUrl = "/home/get/panel"
+    dict = {"un": curName, "ie": "utf-8"}
+    curUser = user()
+    userInfo = sendRequest(httpConnection, baseUrl + userUrl, fields=dict)
+    userInfoData = userInfo.data.decode("utf-8")
+    # pattern to extract user info
+    userAgePattern = re.compile(r"(?<=tb_age\":).*?(?=,)")
+    userPostNumbPattern = re.compile(r"(?<=post_num\":).*?(?=,)")
+    userSexPattern = re.compile(r"(?<=sex\":\").*?(?=\")")
+    curUser.userAge = userAgePattern.findall(userInfoData)[0]
+    curUser.postNumb = userPostNumbPattern.findall(userInfoData)[0]
+    curUser.sex = userSexPattern.findall(userInfoData)[0]
+    curUser.userName = curName
+    print("userAge",curUser.userAge,"userName",curUser.userName,"postNum",curUser.postNumb)
+    return curUser
 def main():
     baseUrl = "http://tieba.baidu.com"
 
@@ -100,15 +117,14 @@ def main():
             curPostContent = postContent()
             # escapedContent = codecs.escape_decode(curContent)[0]
             curPostContent.content = curContent
-            curUser = user()
             # curUser.userId = curUserId
+            #print(codecs.escape_decode(str(curContent.encode("utf-8")))[0].decode("utf-8"))
+            #try to use the code last line
             #remember the method of decode
             curName = curName.encode("utf-8").decode("unicode_escape")
-            curUser.userName = curName
+            #get user info
+            curUser = getUserInfo(httpConnection=httpPoll,baseUrl=baseUrl,curName=curName)
             postContent.author = curUser
-            userUrl = "/home/get/panel"
-            dict = {"un":curName,"ie":"utf-8"}
-            userInfo = sendRequest(httpPoll,baseUrl + userUrl,fields=dict)
             postContentList.append(curPostContent)
 
         i.posContentList = postContentList
