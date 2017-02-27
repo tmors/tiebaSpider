@@ -137,6 +137,7 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                                 curPostContent = PostContent()
                                 curPostContent.content = curContent
                                 postContentList.append(curPostContent)
+
                                 # print(curName, curUser)
                     else:
                         continue
