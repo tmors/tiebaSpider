@@ -2,6 +2,7 @@ import re
 import threading
 
 import time
+from enum import Enum
 
 baseUrl = "http://tieba.baidu.com"
 dict = {}
@@ -10,11 +11,11 @@ filterDict = {}
 keywords = ""
 tb_name = ""
 import urllib3
-
+sexDict = {"male":1,"female":2}
 postAndContentDict =  {}
-
-
-
+totalThread = []
+dictLock=threading.Lock()
+#帖子回复内容也被提取出来了，但是由于目前改为多线程版本，数据在线程里面没有传回来
 
 class User:
     userId = 0
@@ -54,7 +55,7 @@ def userFilter(userInfo):
     isVIP = filterDict.get("isVIP")
     if(tb_age_min!=None and userInfo.userAge < tb_age_min):
         return False
-    if(sexRequired!=None and userInfo.sex != sexRequired):
+    if(sexRequired!=None and sexRequired != 0 and sexDict.get(userInfo.sex) != sexRequired):
         return False
     if(isVIP!=None and userInfo.isVIP != isVIP):
         return False
@@ -116,7 +117,7 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                 try:
                     content = curPageContent.data.decode("utf-8")
                 except:
-                    print("droped url:", self.curPostUrl)
+                    print("droped url:", self.curPostUrl ,"pn is", curPageCount)
                     curPageCount -= 1
                     continue
                 curPageCount -= 1
@@ -133,17 +134,21 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                         if (dict.get(curName) == None):
                             curUser = getUserInfo(curName=curName)
                             if (userFilter(curUser)):
+                                dictLock.acquire()
                                 dict[curName] = curUser
+                                dictLock.release()
+
                                 curPostContent = PostContent()
                                 curPostContent.content = curContent
                                 postContentList.append(curPostContent)
+                                print("add user:", curName)
 
                                 # print(curName, curUser)
                     else:
                         continue
 
-            print(self.getName(),"stopped")
-            self.thread_stop = True
+            # print(self.getName(),"stopped")
+            self.stop()
 
 
     def stop(self):
@@ -151,58 +156,106 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
 
 
 
-class mySpider:
-    def __init__(self,tb_name_var,keywords_var,filterDict_var,):
-        global filterDict,keywords,tb_name,dict
-        dict = {}
-        filterDict = filterDict_var
-        keywords = keywords_var
-        tb_name = tb_name_var
+class PostPageScanner(threading.Thread):
+    def __init__(self,cur_tb_name,curPn):
+        threading.Thread.__init__(self)
+        self.curPn = curPn
+        self.cur_tb_name = tb_name
+        self.threadStop = False
         return
-    def search(self):
-        global dict
+    def run(self):
+        if(self.threadStop != True):
+            global dict
+            postCountLimit = 50
+            global httpPool, filterDict, keywords
+            httpPool = urllib3.PoolManager()
 
-        postCountLimit = 30
-        global httpPool,filterDict,keywords,tb_name
-        httpPool = urllib3.PoolManager()
+            page = httpPool.request(method="GET", url=baseUrl + "/f", fields={"kw": self.cur_tb_name, "pn": self.curPn})
+            print("open the main page")
+            content = page.data.decode("utf-8")
+            pattern = re.compile(r"<a.*class=\"j_th_tit \".*>")
+            posts = pattern.findall(content)
+            hrefPattern = re.compile(r"(?<=href=\").*?(?=\")")
+            threads = []
+            curPostNum = 1
+            for i in posts:
+                if (curPostNum > postCountLimit):
+                    break
+                hrefList = hrefPattern.findall(i)
+                print("open post url ", i)
+                postContentTask = postContentScanner(baseUrl + hrefList[0])
+                postContentTask.setDaemon(True)
+                threads.append(postContentTask)
+                totalThread.append(postContentTask)
+                postContentTask.start()
+                time.sleep(2)
+                curPostNum += 1
 
-        page = httpPool.request(method="GET", url = baseUrl + "/f", fields={"kw": tb_name})
-        print("open the main page")
-        content = page.data.decode("utf-8")
-        pattern = re.compile(r"<a.*class=\"j_th_tit \".*>")
-        posts = pattern.findall(content)
-        hrefPattern = re.compile(r"(?<=href=\").*?(?=\")")
-        threads = []
-        curPostNum = 1
-        for i in posts:
-            if(curPostNum > postCountLimit):
-                break
-            hrefList = hrefPattern.findall(i)
-            print("open post url ", i)
-            postContentTask = postContentScanner(baseUrl + hrefList[0])
-            threads.append(postContentTask)
-            postContentTask.start()
-            curPostNum += 1
 
-        time.sleep(5)
-        stopedThreads = threads
-        startTime = time.time()
-        while time.time() - startTime < 10 and stopedThreads.__len__()!= 0:
-            stopedThreads = threads
-            stopedThreads = [i for i in stopedThreads if i.isAlive() == True]
-            time.sleep(1)
-            print("alived thread:",stopedThreads.__len__())
+            alivedThreads = threads
+            startTime = time.time()
+            while time.time() - startTime < 10 and alivedThreads.__len__() != 0:
+                alivedThreads = threads
+                alivedThreads = [i for i in alivedThreads if i.isAlive() == True]
+                time.sleep(1)
 
-        print(dict)
-        postList = []
-        return postList,dict
+            print("curPn", self.curPn, "finished","dict len is ",dict.__len__())
+            self.stop()
+    def stop(self):
+        self.threadStop = True
+
 def test():
-    myS = mySpider("炉石传说","内容",{"sex":"male"})
+    myS = PostPageScanner("炉石传说","",{"sex":"male"})
     myS.search()
 
 
     return
 
 
+class Main(threading.Thread):
+    def __init__(self,tb_name_var,keywords_var,filterDict_var):
+        threading.Thread.__init__(self)
+        global filterDict,keywords,tb_name,dict
+        dict = {}
+        filterDict = filterDict_var
+        keywords = keywords_var
+        tb_name = tb_name_var
+        self.threadStop = False
+        return
+    def run(self):
+        if(self.threadStop == False):
+            global tb_name
+            postPageLimit = 1
+            threads = []
+            for i in range(0, postPageLimit):
+                postPageThread = PostPageScanner(tb_name, i * 50)
+                totalThread.append(postPageThread)
+                postPageThread.start()
+                time.sleep(5)
+                threads.append(postPageThread)
+            time.sleep(5)
+            alivedThreads = threads
+            startTime = time.time()
+            while alivedThreads.__len__() != 0:
+                alivedThreads = threads
+                alivedThreads = [i for i in alivedThreads if i.isAlive() == True]
+                time.sleep(1)
+                print("post page alived thread:", alivedThreads.__len__())
+            print(dict.__len__())
+            self.threadStop()
+    def threadStop(self):
+        self.threadStop = True
+
 if __name__ == '__main__':
-    test()
+
+    mainThread = Main("炉石传说", "", {"sex": 0})
+    mainThread.setDaemon(True)
+    mainThread.start()
+    isAllThreadsStopped = False
+    while (isAllThreadsStopped != True):
+        isAllThreadsStopped = True
+        for curThread in totalThread:
+            if (curThread.isAlive() == True):
+                isAllThreadsStopped = False
+                break
+        time.sleep(5)
