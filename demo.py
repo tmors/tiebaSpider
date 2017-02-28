@@ -97,7 +97,7 @@ class Ui_Widget(object):
             time.sleep(5)
         model = QStandardItemModel(self.searchResult)
         for i in spider.dict:
-            curUser = dict.get(i)
+            curUser = spider.dict.get(i)
             str = curUser.toString()
             item = QStandardItem(str)
             model.appendRow(item)
