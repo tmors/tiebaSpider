@@ -157,7 +157,7 @@ class Ui_Widget(object):
         self.outputFile.setFont(font)
         self.outputFile.setObjectName("outputFile")
         self.verticalLayoutWidget_2 = QtWidgets.QWidget(Widget)
-        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(240, 260, 130, 51))
+        self.verticalLayoutWidget_2.setGeometry(QtCore.QRect(230, 260, 142, 51))
         self.verticalLayoutWidget_2.setObjectName("verticalLayoutWidget_2")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_2)
         self.verticalLayout_3.setContentsMargins(11, 11, 11, 11)
