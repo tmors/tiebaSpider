@@ -105,7 +105,7 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
             firstPage = httpPool.request(method="GET", url=self.curPostUrl, fields={"pn": 1})
             # 帖子内容正则表达式
             pageCountPattern = re.compile(r"(?<=<span class=\"red\">).*?(?=</span>)")
-            contentPostedPattern = re.compile(r"(?<=class=\"d_post_content j_d_post_content \">).*?(?=</div>)")
+            contentPostedPattern = re.compile(r"(?<=class=\"d_post_content j_d_post_content).*?(?=</div>)")
             authorNamePostedPattern = re.compile(r"(?<=<a data-field='\{&quot;un&quot;:&quot;).*?(?=&)")
 
             # 帖子总页数
@@ -134,7 +134,7 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                 curPostAuthorNameList = [i.encode("utf-8").decode("unicode_escape") for i in
                                          authorNamePostedPattern.findall(content)]
                 print("cur post lens and author lens",curPostsContentList.__len__(),curPostAuthorNameList.__len__())
-                for curContent, curName in zip(["content mock" for i in range(curPostAuthorNameList.__len__())], curPostAuthorNameList):
+                for curContent, curName in zip(curPostsContentList, curPostAuthorNameList):
                     if keywords == "" or keywords in curContent:
                         if (dict.get(curName) == None):
                             curUser = getUserInfo(curName=curName)
