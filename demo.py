@@ -287,7 +287,7 @@ class Ui_Widget(object):
         self.postCommentPageLimit_show_2.setText(_translate("Widget", "页回复"))
 
     def saveFile(self):
-        fileName = QFileDialog.getSaveFileName(None, 'save file', '',"All Files (*);;Text Files (*.txt)")
+        fileName = QFileDialog.getSaveFileName(None, 'save file', '', "Text Files (*.txt)")
         if(fileName[0]==""):
             return
         curFile = open(fileName[0], "w", encoding="utf-8")
