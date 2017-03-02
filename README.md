@@ -1,2 +1,0 @@
-# tiebaSpider
-tieba spider

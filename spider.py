@@ -15,7 +15,11 @@ sexDict = {"male":1,"female":2}
 postAndContentDict =  {}
 totalThread = []
 dictLock=threading.Lock()
+postPageLimit = 1
+postCommentPageLimit = 30
 #帖子回复内容也被提取出来了，但是由于目前改为多线程版本，数据在线程里面没有传回来
+
+
 
 class User:
     userId = 0
@@ -107,7 +111,8 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
             # 帖子总页数
             pageCount = int(pageCountPattern.findall(str(firstPage.data))[0])
             curPageCount = pageCount
-            pageCountLimit = 5
+            global postCommentPageLimit
+            pageCountLimit = int(postCommentPageLimit)
 
             # 贴吧回复列表
             postContentList = []
@@ -128,8 +133,8 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                 # 提取帖子回复作者
                 curPostAuthorNameList = [i.encode("utf-8").decode("unicode_escape") for i in
                                          authorNamePostedPattern.findall(content)]
-
-                for curContent, curName in zip(curPostsContentList, curPostAuthorNameList):
+                print("cur post lens and author lens",curPostsContentList.__len__(),curPostAuthorNameList.__len__())
+                for curContent, curName in zip(["content mock" for i in range(curPostAuthorNameList.__len__())], curPostAuthorNameList):
                     if keywords == "" or keywords in curContent:
                         if (dict.get(curName) == None):
                             curUser = getUserInfo(curName=curName)
@@ -166,6 +171,7 @@ class PostPageScanner(threading.Thread):
     def run(self):
         if(self.threadStop != True):
             global dict
+            #每页扫描帖子个数，暂时不限定，50为全量
             postCountLimit = 50
             global httpPool, filterDict, keywords
             httpPool = urllib3.PoolManager()
@@ -213,25 +219,31 @@ def test():
 
 
 class Main(threading.Thread):
-    def __init__(self,tb_name_var,keywords_var,filterDict_var):
+    def __init__(self,tb_name_var,keywords_var,filterDict_var,postPageLimit_var, postCommentPageLimit_var):
         threading.Thread.__init__(self)
-        global filterDict,keywords,tb_name,dict
+        global filterDict,keywords,tb_name,dict,postPageLimit, postCommentPageLimit
         dict = {}
         filterDict = filterDict_var
         keywords = keywords_var
         tb_name = tb_name_var
+        try:
+            postPageLimit = int(postPageLimit_var)
+            postCommentPageLimit = int(postCommentPageLimit_var)
+        except:
+            postPageLimit = 1
+            postCommentPageLimit = 30
         self.threadStop = False
         return
     def run(self):
         if(self.threadStop == False):
-            global tb_name
-            postPageLimit = 1
+            global tb_name,postPageLimit
+
             threads = []
-            for i in range(0, postPageLimit):
+            for i in range(0, int(postPageLimit)):
                 postPageThread = PostPageScanner(tb_name, i * 50)
                 totalThread.append(postPageThread)
                 postPageThread.start()
-                time.sleep(5)
+                time.sleep(2)
                 threads.append(postPageThread)
             time.sleep(5)
             alivedThreads = threads
@@ -242,8 +254,8 @@ class Main(threading.Thread):
                 time.sleep(1)
                 print("post page alived thread:", alivedThreads.__len__())
             print(dict.__len__())
-            self.threadStop()
-    def threadStop(self):
+            self.stop()
+    def stop(self):
         self.threadStop = True
 
 if __name__ == '__main__':
