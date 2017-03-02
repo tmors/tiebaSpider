@@ -297,7 +297,7 @@ class Ui_Widget(object):
 
     def search(self):
         self.searchResult.clear()
-        self.widget.dictCountOutput.setText("0")
+        self.dictCountOutput.setText("0")
         tb_name = self.tb_name_input.text()
         sex = self.sex_input.currentIndex()
         keywords = self.keywords_input.text()

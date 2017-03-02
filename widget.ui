@@ -32,8 +32,8 @@
    <string>贴吧用户采集器</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>tb.png</normaloff>tb.png</iconset>
+   <iconset resource="resourece.qrc">
+    <normaloff>:/images/tb.png</normaloff>:/images/tb.png</iconset>
   </property>
   <widget class="QPushButton" name="searchButton">
    <property name="geometry">
@@ -206,7 +206,7 @@
     <rect>
      <x>240</x>
      <y>260</y>
-     <width>111</width>
+     <width>121</width>
      <height>51</height>
     </rect>
    </property>
@@ -256,7 +256,7 @@
     <string/>
    </property>
    <property name="pixmap">
-    <pixmap>01_logo.jpg</pixmap>
+    <pixmap resource="resourece.qrc">:/images/01_logo.jpg</pixmap>
    </property>
    <property name="scaledContents">
     <bool>true</bool>
@@ -381,7 +381,7 @@
     <rect>
      <x>312</x>
      <y>121</y>
-     <width>16</width>
+     <width>41</width>
      <height>17</height>
     </rect>
    </property>
@@ -413,18 +413,20 @@
     <enum>QFrame::Raised</enum>
    </property>
   </widget>
+  <zorder>dictCountShow</zorder>
+  <zorder>dictCountOutput</zorder>
+  <zorder>frame</zorder>
   <zorder>searchButton</zorder>
   <zorder>formGroupBox</zorder>
   <zorder>searchResult</zorder>
   <zorder>outputFile</zorder>
-  <zorder>formLayoutWidget_2</zorder>
-  <zorder>label</zorder>
   <zorder>verticalLayoutWidget_2</zorder>
   <zorder>label</zorder>
-  <zorder>sex_show</zorder>
   <zorder>gridLayoutWidget</zorder>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="resourece.qrc"/>
+ </resources>
  <connections/>
 </ui>
