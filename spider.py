@@ -146,7 +146,7 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
                                 curPostContent = PostContent()
                                 curPostContent.content = curContent
                                 postContentList.append(curPostContent)
-                                print("add user:", curName)
+                                print("add user:", curName,"comment:",curContent)
 
                                 # print(curName, curUser)
                     else:
@@ -177,7 +177,6 @@ class PostPageScanner(threading.Thread):
             httpPool = urllib3.PoolManager()
 
             page = httpPool.request(method="GET", url=baseUrl + "/f", fields={"kw": self.cur_tb_name, "pn": self.curPn})
-            print("open the main page")
             content = page.data.decode("utf-8")
             pattern = re.compile(r"<a.*class=\"j_th_tit \".*>")
             posts = pattern.findall(content)
@@ -188,7 +187,6 @@ class PostPageScanner(threading.Thread):
                 if (curPostNum > postCountLimit):
                     break
                 hrefList = hrefPattern.findall(i)
-                print("open post url ", i)
                 postContentTask = postContentScanner(baseUrl + hrefList[0])
                 postContentTask.setDaemon(True)
                 threads.append(postContentTask)
