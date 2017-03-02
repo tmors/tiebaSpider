@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QListWidgetItem
 import spider
 import multiprocessing.queues
+import resource_rc
 class monitorScannerThread(threading.Thread):
     def __init__(self,totalThreads,widget,dictThread):
         threading.Thread.__init__(self)
@@ -73,7 +74,7 @@ class Ui_Widget(object):
         Widget.setMinimumSize(QtCore.QSize(380, 320))
         Widget.setMaximumSize(QtCore.QSize(380, 320))
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("tb.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap(":/images/tb.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Widget.setWindowIcon(icon)
         self.searchButton = QtWidgets.QPushButton(Widget)
         self.searchButton.setGeometry(QtCore.QRect(250, 10, 101, 31))
@@ -178,7 +179,7 @@ class Ui_Widget(object):
         self.label = QtWidgets.QLabel(Widget)
         self.label.setGeometry(QtCore.QRect(240, 180, 101, 61))
         self.label.setText("")
-        self.label.setPixmap(QtGui.QPixmap("01_logo.jpg"))
+        self.label.setPixmap(QtGui.QPixmap(":/images/01_logo.jpg"))
         self.label.setScaledContents(True)
         self.label.setObjectName("label")
         self.gridLayoutWidget = QtWidgets.QWidget(Widget)
