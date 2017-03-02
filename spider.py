@@ -33,7 +33,7 @@ class User:
     def __init__(self):
         pass
     def toString(self):
-        return self.userName + " " + self.sex + " "  + str(self.userAge) + " "  + str(self.postNumb)
+        return self.userName
 
 class Post:
     author = User()
