@@ -7,6 +7,7 @@
 # WARNING! All changes made in this file will be lost!
 import threading
 import time
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QImage
@@ -27,13 +28,14 @@ class monitorScannerThread(threading.Thread):
         self.dictThread = dictThread
     def run(self):
         time.sleep(5)
-        while(self.isAllThreadsStopped==False):
-            self.isAllThreadsStopped = True
+        while (True):
+            curAlivedThread = 0
             for curThread in self.totalThreads:
                 if (curThread.isAlive() == True):
-                    self.isAllThreadsStopped = False
-                    break
-
+                    curAlivedThread += 1
+            if (curAlivedThread == 0):
+                break
+            print("cur alived thread is ", curAlivedThread)
             time.sleep(5)
         self.dictThread.stop()
         for i in spider.dict:
@@ -294,33 +296,38 @@ class Ui_Widget(object):
         for i in spider.dict:
             curFile.write(i + "\n")
 
-
+    isClicked = False
     def search(self):
-        self.searchResult.clear()
-        self.dictCountOutput.setText("0")
-        tb_name = self.tb_name_input.text()
-        sex = self.sex_input.currentIndex()
-        keywords = self.keywords_input.text()
-        postPageLimit =  self.postPageLimit.text()
-        postCommentPageLimit = self.postCommentPageLimit.text()
-        dictMonitor = monitorDictThread(self)
-        dictMonitor.setDaemon(True)
-        dictMonitor.start()
-        mainThread = spider.Main(tb_name, keywords, {"sex": sex},postPageLimit, postCommentPageLimit)
-        mainThread.start()
+        _translate = QtCore.QCoreApplication.translate
+        if (self.isClicked == False):
+            self.isClicked = True
+            self.searchResult.clear()
+            self.dictCountOutput.setText("0")
 
-        monitorScanner = monitorScannerThread(spider.totalThread,self, dictMonitor)
-        monitorScanner.start()
-        # time.sleep(20)
-        # model = QStandardItemModel(self.searchResult)
-        # for i in spider.dict:
-        #     curUser = spider.dict.get(i)
-        #     str = curUser.toString()
-        #     item = QStandardItem(str)
-        #     model.appendRow(item)
-        # self.searchResult.setModel(model)
-        # self.searchResult.show()
-        print()
+            self.searchButton.setText(_translate("Widget", "停止"))
+            tb_name = self.tb_name_input.text()
+            sex = self.sex_input.currentIndex()
+            keywords = self.keywords_input.text()
+            postPageLimit = self.postPageLimit.text()
+            postCommentPageLimit = self.postCommentPageLimit.text()
+            dictMonitor = monitorDictThread(self)
+            dictMonitor.setDaemon(True)
+            dictMonitor.start()
+            mainThread = spider.Main(tb_name, keywords, {"sex": sex}, postPageLimit, postCommentPageLimit)
+            mainThread.start()
+
+            monitorScanner = monitorScannerThread(spider.totalThread, self, dictMonitor)
+            monitorScanner.start()
+        else:
+            # stop all threads and set button text to start search
+            self.searchButton.setText(_translate("Widget", "开始搜索"))
+            self.stopAllThreads()
+            self.isClicked = False
+
+    def stopAllThreads(self):
+        totalThreads = spider.totalThread
+        for i in totalThreads:
+            i.stop()
 
 if __name__ == "__main__":
 

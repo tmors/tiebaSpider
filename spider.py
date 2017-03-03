@@ -119,6 +119,9 @@ class postContentScanner(threading.Thread):  # The timer class is derived from t
             while curPageCount >= 1 and (pageCount - curPageCount) <= pageCountLimit:
                 curPageContent = httpPool.request(method="GET", url=self.curPostUrl,
                                                   fields={"pn": curPageCount})
+                # stop current thread
+                if (self.thread_stop == True):
+                    break;
                 try:
                     content = curPageContent.data.decode("utf-8")
                 except:
@@ -186,6 +189,9 @@ class PostPageScanner(threading.Thread):
             for i in posts:
                 if (curPostNum > postCountLimit):
                     break
+                # stop current thread
+                if (self.threadStop == True):
+                    break;
                 hrefList = hrefPattern.findall(i)
                 postContentTask = postContentScanner(baseUrl + hrefList[0])
                 postContentTask.setDaemon(True)
