@@ -292,7 +292,7 @@ class Ui_Widget(object):
         fileName = QFileDialog.getSaveFileName(None, 'save file', '', "Text Files (*.txt)")
         if(fileName[0]==""):
             return
-        curFile = open(fileName[0], "w", encoding="utf-8")
+        curFile = open(fileName[0], "w", encoding="gbk")
         for i in spider.dict:
             curFile.write(i + "\n")
 
